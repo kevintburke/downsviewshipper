@@ -4,7 +4,7 @@ Processes spreadsheets for K@D SHIP workflows to separate by missing/loaned, mon
 
 <em>NOTE: This program is designed for use with items that have descriptions but lack data in the enumeration and chronology fields!</em>
 
-<em>Process</em>
+<strong>Process</strong>
 <ul>
 <li>Ensure script and prompt file are stored in the same directory</li>
 <li>Ensure ollama is active and model is installed (type "ollama run qwen2.5-coder" in the command line to activate)</li>
@@ -38,7 +38,7 @@ The script will confirm that all inputs are present and that the input file is i
   <li>The user will be prompted to save each output (outputs with no content will be skipped)</li>
 </ol>
 
-General Notes:
+<strong>General Notes:</strong>
 <ul>
   <li>The missing and on loan columns will be treated as true/false based on whether they contain any content (including whitespace)</li>
   <li>The material type parsing was developed using Alma's OTB material types</li>

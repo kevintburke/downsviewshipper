@@ -53,7 +53,7 @@ class DownsviewSHIPPER:
         self.workflow_box.grid(column=1,row=9,padx=10)
         tk.Label(root, text="Item Missing").grid(column=2,row=8)
         self.missing_box.grid(column=2,row=9,padx=10)
-        tk.Label(root, text="Item on Loan?").grid(column=0,row=10)
+        tk.Label(root, text="Item on Loan").grid(column=0,row=10)
         self.loaned_box.grid(column=0,row=11,padx=10)
         tk.Label(root, text="Item ID").grid(column=1,row=10)
         self.itemid_box.grid(column=1,row=11,padx=10)
@@ -162,28 +162,32 @@ class DownsviewSHIPPER:
             messagebox.showwarning(title="Ollama Error",message="Error. Please ensure ollama is running.")
             return None
         for index, row in df_found.iterrows():
-            success = False
-            while success == False:
-                print("Calling ollama...")
-                structured_data = chat(model="qwen2.5-coder",messages=[{'role':'user','content':prompt + str(row[description_column]),},]).message.content
-                #Parse to remove ```python``` and ```json``` to reduce amount of errors and repeat calls req'd
-                ##Add error checking to reject any outputs that contain text not in input?
-                if structured_data.startswith("`"):
-                    print("Cleaning structured data string: ", structured_data)
-                    structured_data = re.sub(r'```python\n?(\{[^\}]+\})\n?```|```json\n?(\{[^\}]+\})\n?```',r'\1',structured_data)
-                    print("Structured data cleaned to: ", structured_data)
-                #Try parsing dictionary for required content
-                try:
-                    parsed_data = ast.literal_eval(structured_data)
-                    parsed_data["Enum A"]
-                    parsed_data["Enum B"]
-                    parsed_data["Chron I"]
-                    parsed_data["Chron J"]
-                    print(f'Parse successful: {parsed_data}')
-                    success = True
-                except:
-                    print("Parse failed",structured_data)
-                    continue
+            if str(row[description_column]) != "nan":
+                success = False
+                while success == False:
+                    print("Calling ollama...")
+                    structured_data = chat(model="qwen2.5-coder",messages=[{'role':'user','content':prompt + str(row[description_column]),},]).message.content
+                    #Parse to remove ```python``` and ```json``` to reduce amount of errors and repeat calls req'd
+                    ##Add error checking to reject any outputs that contain text not in input?
+                    if structured_data.startswith("`"):
+                        print("Cleaning structured data string: ", structured_data)
+                        structured_data = re.sub(r'```python\n?(\{[^\}]+\})\n?```|```json\n?(\{[^\}]+\})\n?```',r'\1',structured_data)
+                        print("Structured data cleaned to: ", structured_data)
+                    #Try parsing dictionary for required content
+                    try:
+                        parsed_data = ast.literal_eval(structured_data)
+                        parsed_data["Enum A"]
+                        parsed_data["Enum B"]
+                        parsed_data["Chron I"]
+                        parsed_data["Chron J"]
+                        print(f'Parse successful: {parsed_data}')
+                        success = True
+                    except:
+                        print("Parse failed",structured_data)
+                        continue
+            else:
+                print("No description present")
+                continue
             for i in ["Enum A","Enum B","Chron I","Chron J"]:
                 row[i] = str(parsed_data[i])
             print(f'€€€€€€€€€€€€€€€€€€\nINDEX IS CURRENTLY {index}/{len(df_found)}\n€€€€€€€€€€€€€€€€€€')
@@ -212,13 +216,14 @@ class DownsviewSHIPPER:
             df_monos = df_monos.drop(labels=column_new,axis=1)
         print("FOUND MONOS\n",df_monos,df_monos.columns.values,"\n€€€€€€€€€€€€€€€€€€\n")
         #Split workflow 1 and 2
-        df_serials_wf1 = df_serials.loc[df_serials[workflow_column].str.endswith("1")]
+        #Using series.str.contains() to account for extra spaces in input data. NOTE: WILL FAIL IF 1 or 2 elsewhere in column data!
+        df_serials_wf1 = df_serials.loc[df_serials[workflow_column].str.contains("1")]
         print("SERIALS WF 1\n",df_serials_wf1,"\n€€€€€€€€€€€€€€€€€€\n")
-        df_serials_wf2 = df_serials.loc[df_serials[workflow_column].str.endswith("2")]
+        df_serials_wf2 = df_serials.loc[df_serials[workflow_column].str.contains("2")]
         print("SERIALS WF 2\n",df_serials_wf2,"\n€€€€€€€€€€€€€€€€€€\n")
-        df_monos_wf1 = df_monos.loc[df_monos[workflow_column].str.endswith("1")]
+        df_monos_wf1 = df_monos.loc[df_monos[workflow_column].str.contains("1")]
         print("MONOS WF 1\n",df_monos_wf1,"\n€€€€€€€€€€€€€€€€€€\n")
-        df_monos_wf2 = df_monos.loc[df_monos[workflow_column].str.endswith("2")]
+        df_monos_wf2 = df_monos.loc[df_monos[workflow_column].str.contains("2")]
         print("MONOS WF 2\n",df_monos_wf2,"\n€€€€€€€€€€€€€€€€€€\n")
         #Create dataframes for outputs and set default values for library and location code
         missing_output = df_missing[[itemid_column,barcode_column,uomms_column,title_column,missing_column]]
